@@ -1,6 +1,7 @@
 #include <sourcemod>
 #include <clientprefs>
 #include <basecomm>
+#include <multicolors>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -23,7 +24,7 @@ ConVar g_cvAdminView;
 public void OnPluginStart()
 {
     LoadTranslations("common.phrases");
-
+    LoadTranslations("privatemessages.phrases");
     RegConsoleCmd("sm_pm", Command_SendPM);
     RegConsoleCmd("sm_pmon", Command_PMon);
     RegConsoleCmd("sm_pmoff", Command_PMoff);
@@ -50,13 +51,13 @@ public void OnClientPutInServer(int client)
 
 public Action Command_PMoff(int client, int args) 
 {
-	PrintToChat(client, " ★ \x02PM\'s are now disabled.");
+	CPrintToChat(client, " ★ \x02PM\'s are now disabled.");
 	g_IsPMon[client] = false;
 	SetClientCookie(client, g_PM_Cookie, "0");
 }
 public Action Command_PMon(int client, int args) 
 {
-	PrintToChat(client, " ★ \x04PM\'s are now enabled.");
+	CPrintToChat(client, " ★ \x04PM\'s are now enabled.");
 	g_IsPMon[client] = true;
 	SetClientCookie(client, g_PM_Cookie, "1");
 }
@@ -65,7 +66,7 @@ public Action Command_SendPM(int client, int args)
 {
     if(args < 2)
 	{
-		ReplyToCommand(client, " \x04[SM]: \x07Usage sm_pm <#player> <message>");
+		CReplyToCommand(client, "%t", "Usage");
 		return Plugin_Handled;
 	}
 
@@ -81,13 +82,13 @@ public Action Command_SendPM(int client, int args)
 
     if(g_IsPMon[client] == false || g_IsPMon[Target] == false) 
 	{
-		PrintToChat(client, " \x03[PM System]: \x07You or the target disabled the PM\'s");
+		CPrintToChat(client, "%t", "Target Disabled");
 		return Plugin_Handled;
 	}
 
     if(Target == client)
     {
-		ReplyToCommand( client, " \x03[PM System]: \x07You can\'t send yourself a message!" );
+		CReplyToCommand( client, "%t", "Message To Yourself");
 		return Plugin_Handled;
     }
     
@@ -102,8 +103,8 @@ public Action Command_SendPM(int client, int args)
         GetCmdArgString(Message, sizeof(Message));
         ReplaceStringEx(Message, sizeof(Message), iTarget, "", -1, -1, true);
 
-        PrintToChat(Target, " \x03[PM from \x04%s\x03]: \x01%s", ClientName, Message);
-        PrintToChat(client, " \x03[PM to \x04%s\x03]: \x01%s", TargetName, Message);
+        CPrintToChat(Target, "%t", "PM From", ClientName, Message);
+        CPrintToChat(client, "%t", "PM To", TargetName, Message);
         
         if(g_cvAdminView.IntValue == 1)
         {
@@ -135,7 +136,7 @@ void PrintToAdmins(int iTarget, int iClient, const char[] sMessage)
 	{
 		if(IsClientValid(iAdmin) && GetAdminFlag(GetUserAdmin(iAdmin), Admin_Kick))
 		{
-			PrintToChat(iAdmin, " \x03[PM System]:\x07 %N\x01 to\x04 %N\x01:\x10 \"%s\".", iClient, iTarget, sMessage);
+			CPrintToChat(iAdmin, "%t", "Admin PM", iClient, iTarget, sMessage);
 		}
 	}
 }
